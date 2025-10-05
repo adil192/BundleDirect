@@ -18,18 +18,16 @@ public class ModRecipeProvider extends RecipeProvider implements IConditionBuild
   @Override
   protected void buildRecipes(RecipeOutput recipeOutput) {
     ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, Items.BUNDLE)
-        .pattern("SLS")
-        .pattern("L L")
-        .pattern("LLL")
+        .pattern("S")
+        .pattern("L")
         .define('S', Items.STRING)
         .define('L', Items.LEATHER)
         .unlockedBy("has_leather", has(Items.LEATHER))
         .save(recipeOutput, "bundledirect:bundle_from_leather");
 
     ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, Items.BUNDLE)
-        .pattern("SLS")
-        .pattern("L L")
-        .pattern("LLL")
+        .pattern("S")
+        .pattern("L")
         .define('S', Items.STRING)
         .define('L', Items.RABBIT_HIDE)
         .unlockedBy("has_rabbit_hide", has(Items.RABBIT_HIDE))
