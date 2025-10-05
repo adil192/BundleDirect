@@ -3,6 +3,7 @@
   "package": "com.adilhanney.bundledirect.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "BreedGoalMixin",
     "BundleItemMixin"
   ],
   "injectors": {
