@@ -2,7 +2,9 @@
   "required": true,
   "package": "com.adilhanney.bundledirect.mixin",
   "compatibilityLevel": "JAVA_21",
-  "mixins": [],
+  "mixins": [
+    "BundleItemMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   },

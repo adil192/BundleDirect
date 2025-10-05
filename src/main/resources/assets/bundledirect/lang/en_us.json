@@ -9,5 +9,6 @@
   "bundledirect.configuration.items": "Item List",
   "bundledirect.configuration.logDirtBlock": "Log Dirt Block",
   "bundledirect.configuration.magicNumberIntroduction": "Magic Number Text",
-  "bundledirect.configuration.magicNumber": "Magic Number"
+  "bundledirect.configuration.magicNumber": "Magic Number",
+  "text.bundledirect.bundle.out_of_item": "You ran out of %s"
 }
