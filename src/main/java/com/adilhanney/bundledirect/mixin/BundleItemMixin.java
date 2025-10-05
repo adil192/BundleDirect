@@ -14,6 +14,7 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.item.component.BundleContents;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -60,9 +61,20 @@ public abstract class BundleItemMixin extends Item {
       final RandomSource random = level.getRandom();
       // TODO(adil192): Upstream this bug fix
       final int randomIndex = availableIndexes.get(random.nextInt(availableIndexes.size()));
-      final BlockItem blockItem = (BlockItem) bundleContents.getItemUnsafe(randomIndex).getItem();
+      final ItemStack randomItemStack = bundleContents.getItemUnsafe(randomIndex);
+      final BlockItem randomItem = (BlockItem) randomItemStack.getItem();
 
-      result = blockItem.useOn(context);
+      result = randomItem.useOn(new UseOnContext(
+          level, player, context.getHand(),
+          // Copy so it doesn't decrement item count before we're ready.
+          randomItemStack.copy(),
+          new BlockHitResult(
+              context.getClickLocation(),
+              context.getClickedFace(),
+              context.getClickedPos(),
+              context.isInside()
+          )
+      ));
       if (result == InteractionResult.sidedSuccess(level.isClientSide)) {
         if (!level.isClientSide && !player.isCreative()) {
           bundleDirect$removeItem(player, bundleItemStack, randomIndex);
