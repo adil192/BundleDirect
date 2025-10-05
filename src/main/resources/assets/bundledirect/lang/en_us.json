@@ -1,14 +1,3 @@
 {
-  "itemGroup.bundledirect": "Example Mod Tab",
-  "block.bundledirect.example_block": "Example Block",
-  "item.bundledirect.example_item": "Example Item",
-
-  "bundledirect.configuration.title": "BundleDirect Configs",
-  "bundledirect.configuration.section.bundledirect.common.toml": "BundleDirect Configs",
-  "bundledirect.configuration.section.bundledirect.common.toml.title": "BundleDirect Configs",
-  "bundledirect.configuration.items": "Item List",
-  "bundledirect.configuration.logDirtBlock": "Log Dirt Block",
-  "bundledirect.configuration.magicNumberIntroduction": "Magic Number Text",
-  "bundledirect.configuration.magicNumber": "Magic Number",
   "text.bundledirect.bundle.out_of_item": "You ran out of %s"
 }
