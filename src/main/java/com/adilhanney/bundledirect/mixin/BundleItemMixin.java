@@ -24,6 +24,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
@@ -55,13 +56,12 @@ public abstract class BundleItemMixin extends Item {
     }
 
     final Level level = context.getLevel();
+    final RandomSource random = level.getRandom();
+
     InteractionResult result = InteractionResult.FAIL;
-    final List<Integer> availableIndexes = bundleDirect$containedBlockIndexes(bundleContents);
-    while (!availableIndexes.isEmpty() && result != InteractionResult.sidedSuccess(level.isClientSide)) {
-      final RandomSource random = level.getRandom();
-      // TODO(adil192): Upstream this bug fix
-      final int randomIndex = availableIndexes.get(random.nextInt(availableIndexes.size()));
-      final ItemStack randomItemStack = bundleContents.getItemUnsafe(randomIndex);
+    final AvailableBlocks availableBlocks = new AvailableBlocks(bundleContents);
+    while (!availableBlocks.isEmpty() && result != InteractionResult.sidedSuccess(level.isClientSide)) {
+      final ItemStack randomItemStack = availableBlocks.popRandomly(random);
       final BlockItem randomItem = (BlockItem) randomItemStack.getItem();
 
       result = randomItem.useOn(new UseOnContext(
@@ -77,36 +77,25 @@ public abstract class BundleItemMixin extends Item {
       ));
       if (result == InteractionResult.sidedSuccess(level.isClientSide)) {
         if (!level.isClientSide && !player.isCreative()) {
-          bundleDirect$removeItem(player, bundleItemStack, randomIndex);
+          bundleDirect$removeItem(player, bundleItemStack, randomItemStack);
         }
         return result;
       }
-
-      availableIndexes.remove(randomIndex);
     }
 
     return super.useOn(context);
   }
 
   @Unique
-  private List<Integer> bundleDirect$containedBlockIndexes(BundleContents bundleContents) {
-    final List<Integer> availableIndexes = new ArrayList<>();
-    for (int i = 0; i < bundleContents.size(); i++) {
-      final ItemStack itemStack = bundleContents.getItemUnsafe(i);
-      if (itemStack.getItem() instanceof BlockItem) {
-        availableIndexes.add(i);
-      }
-    }
-    return availableIndexes;
-  }
-
-  @Unique
-  private void bundleDirect$removeItem(Player player, ItemStack bundleItemStack, int index) {
+  private void bundleDirect$removeItem(Player player, ItemStack bundleItemStack, ItemStack itemStack) {
     BundleContents bundleContents = bundleItemStack.get(DataComponents.BUNDLE_CONTENTS);
     if (bundleContents == null || bundleContents.isEmpty()) return;
 
     final List<ItemStack> stacks = new ArrayList<>(bundleContents.itemCopyStream().toList());
-    final ItemStack itemStack = bundleContents.getItemUnsafe(index).copy();
+    final int index = bundleDirect$findItemIndex(stacks, itemStack.getItem());
+    assert index >= 0;
+
+    itemStack = itemStack.copy();
     final ItemStack itemStackCopy = itemStack.copy();
 
     itemStack.setCount(itemStack.getCount() - 1);
@@ -144,5 +133,51 @@ public abstract class BundleItemMixin extends Item {
       }
     }
     return new Pair<>(bundleContents, false);
+  }
+
+  @Unique
+  private static int bundleDirect$findItemIndex(List<ItemStack> stacks, Item item) {
+    for (int i = 0; i < stacks.size(); ++i) {
+      final ItemStack stack = stacks.get(i);
+      if (stack.getItem() == item) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  private static class AvailableBlocks {
+    /** The item stacks that haven't been popped yet. */
+    private final List<ItemStack> stacks;
+    /** The sum of all item counts in {@link AvailableBlocks#stacks}. */
+    private int numItems;
+
+    public AvailableBlocks(BundleContents bundleContents) {
+      this.stacks = bundleContents.itemCopyStream()
+          .filter(itemStack -> itemStack.getItem() instanceof BlockItem)
+          .collect(Collectors.toList());
+      this.numItems = this.stacks.stream()
+          .mapToInt(ItemStack::getCount)
+          .sum();
+    }
+
+    public boolean isEmpty() {
+      return this.numItems <= 0;
+    }
+
+    /** Picks an item with a chance based on the abundance of that item */
+    public ItemStack popRandomly(RandomSource random) {
+      final int nthItem = random.nextInt(numItems);
+      int encounteredItems = 0;
+      for (ItemStack itemStack : stacks) {
+        encounteredItems += itemStack.getCount();
+        if (encounteredItems >= nthItem) {
+          stacks.remove(itemStack);
+          numItems -= itemStack.getCount();
+          return itemStack;
+        }
+      }
+      throw new AssertionError();
+    }
   }
 }
